@@ -26,7 +26,7 @@ class Softmax():
         return self.out_activations
 
     def backpropogate(self, gradient, lr):
-            index = np.where(gradient==np.amax(gradient))[0][0]
+            index = np.where(gradient!=0)[0][0]
             a = np.exp(self.in_activations)
             s = np.sum(a)
             out_in = -a[index] * a / (s ** 2)
@@ -38,13 +38,15 @@ class Softmax():
 
             d_L_d_in = gradient[index] * out_in
 
-            nabla_weights = d_in_d_w[np.newaxis].T @ d_L_d_in[np.newaxis]
-            nabla_biases = d_L_d_in * d_in_d_b
+            delta_w = d_in_d_w[np.newaxis].T @ d_L_d_in[np.newaxis]
+            delta_b = d_L_d_in * d_in_d_b
 
             d_L_d_i= d_in_d_i.T @ d_L_d_in
-
-            self.weights -= lr * nabla_weights.T
-            self.biases -= lr * nabla_biases
+            #print(self.weights)
+            #print("\n \n \n")
+            self.weights -= lr * delta_w.T
+            self.biases -= lr * delta_b
+            #print(self.weights)
 
             return d_L_d_i.reshape(self.last_input_shape)
 
@@ -71,7 +73,8 @@ class convolutionLayer():
                 for col in range(0, len(input[row])-1-self.stride, self.stride): 
                     s=np.multiply([input[r][col:col+self.kernel_shape[0]] for r in range(row, row+self.kernel_shape[1])], kernel[1])
                     output[kernel[0]][row][col]=sum(map(sum, s))
-        return output
+        out_output=ReLu(output)
+        return out_output
 
     def backpropogate(self, gradient):
         pass
@@ -107,28 +110,4 @@ class poolingLayer():
 
     def backpropogate(self, gradient):
         pass
-
-
-
-l=[[[5, 4, 6, 4, 5, 2],
-   [0, 1, 3, 7, 1, 0]], [[5, 4, 6, 4, 5, 2],
-   [0, 1, 3, 7, 1, 0]], [[5, 4, 6, 4, 5, 2],
-   [0, 1, 3, 7, 1, 0]]]
-#input: 6x4
-#kernel 2x2, stride 2, output: 3x2
-#input0/2, input1/2
-#kernel 2x2, stride 1, output: 5x3
-#input - kernel / stride
-#mnist_train, mnist_test = (mnist[0][0], mnist[0][1]), (mnist[1][0], mnist[1][1])
-#kernel=[[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-tkl=convolutionLayer(num_kernels=5, s=1)
-tpl=poolingLayer("MAX", [2, 2], s=2)
-tsl=Softmax([845, 10])
-im = [[i/255 for i in j] for j in test_num]
-
-im = tkl.forward(im)
-im = tpl.forward(im)
-im = tsl.forward(im)
-
-#print(im)
 

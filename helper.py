@@ -30,3 +30,8 @@ def split_train_test(train, test, train_size, test_size):
     to_train_pairs = [(train[0][shuffled_index], train[1][shuffled_index]) for shuffled_index in range(len(shuffled_train_indices))]
     to_test_pairs = [(test[0][shuffled_index], test[1][shuffled_index]) for shuffled_index in range(len(shuffled_test_indices))]
     return (to_train_pairs, to_test_pairs)
+
+def ReLu(xl, deriv=False):
+    if not deriv:
+        return np.maximum(xl, 0)
+    return np.max(xl, 0)/xl
