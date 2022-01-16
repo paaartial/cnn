@@ -9,10 +9,27 @@ class dimensionError(Exception):
     pass
 
 class Softmax():
+    def __init__(self) -> None:
+        pass
+
+    def forward(self, input):
+        self.last_input=input
+        e = np.exp(input)
+        self.out_activations = e/np.sum(e)
+        return self.out_activations
+
+    def backpropogate(self, gradient, lr):
+        index_c = np.where(gradient!=0)[0][0]
+        a = np.exp(self.last_input)
+        s = np.sum(a)
+        out_in = -a[index_c] * a / (s ** 2)
+        out_in[index_c] = a[index_c] * (s - a[index_c]) / (s ** 2)
+        return out_in * gradient[index_c]
+
+class FullyConnected():
     def __init__(self, shape) -> None:
         self.shape=shape
-        self.in_activations=[]
-        self.out_activations=[]
+        self.activations=[]
         self.weights=np.random.randn(shape[1], shape[0])
         self.biases=np.zeros(shape[1])
 
@@ -20,35 +37,22 @@ class Softmax():
         f=input.flatten()
         self.last_input=f
         self.last_input_shape=input.shape
-        self.in_activations=np.dot(self.weights, f)+self.biases
-        e = np.exp(self.in_activations)
-        self.out_activations = e/np.sum(e)
-        return self.out_activations
+        self.activations=np.dot(self.weights, f)+self.biases
+        return self.activations
 
     def backpropogate(self, gradient, lr):
-            index = np.where(gradient!=0)[0][0]
-            a = np.exp(self.in_activations)
-            s = np.sum(a)
-            out_in = -a[index] * a / (s ** 2)
-            out_in[index] = a[index] * (s - a[index]) / (s ** 2)
+        #print(self.last_input[np.newaxis].shape)
+        #print(gradient[np.newaxis].shape)
+        delta_w = self.last_input[np.newaxis].T @ gradient[np.newaxis] # d_L_d_w
+        delta_b = gradient * 1
 
-            d_in_d_w = self.last_input
-            d_in_d_b = 1
-            d_in_d_i = self.weights
+        new_grad= self.weights.T @ gradient
 
-            d_L_d_in = gradient[index] * out_in
+        self.weights -= lr * delta_w.T
+        self.biases -= lr * delta_b
 
-            delta_w = d_in_d_w[np.newaxis].T @ d_L_d_in[np.newaxis]
-            delta_b = d_L_d_in * d_in_d_b
+        return new_grad.reshape(self.last_input_shape)
 
-            d_L_d_i= d_in_d_i.T @ d_L_d_in
-            #print(self.weights)
-            #print("\n \n \n")
-            self.weights -= lr * delta_w.T
-            self.biases -= lr * delta_b
-            #print(self.weights)
-
-            return d_L_d_i.reshape(self.last_input_shape)
 
 
 
@@ -76,11 +80,11 @@ class convolutionLayer():
         out_output=ReLu(output)
         return out_output
 
-    def backpropogate(self, gradient):
+    def backpropogate(self, gradient, lr):
         pass
 
 class poolingLayer():
-    #no support for backpropogation of average pooling yet
+    #no support for backpropogation of average pooling yet nor ever
     def __init__(self, type, receptiveField, k=None, p=0, s=2) -> None:
         self.kernel=k
         self.stride=s
@@ -93,7 +97,7 @@ class poolingLayer():
             type(input[0][0][0])
         except:
             raise dimensionError
-
+        self.last_input=input
         output=np.zeros(shape=(len(input), int(len(input[0])/self.stride), int(len(input[0][0])/self.stride)))
         for i in enumerate(input):
             for row in range(0, len(i[1])-1, self.stride):
@@ -106,8 +110,13 @@ class poolingLayer():
                         print("Pooling type not specified. Use either MAX or AVG")
                         return
             #print(ret)
+        self.last_output=output
         return output
 
-    def backpropogate(self, gradient):
-        pass
+    def backpropogate(self, gradient, lr):
+        out_in = np.zeros(shape=self.last_input.shape)
+        
+        for row in range(0, len(self.last_input)-1, self.stride):
+            for col in range(0, len(self.last_input[row])-1, self.stride):
+                out_in[]
 
