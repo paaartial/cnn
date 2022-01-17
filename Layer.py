@@ -14,7 +14,7 @@ class Softmax():
         self.out_activations = e/np.sum(e)
         return self.out_activations
 
-    def backpropogate(self, gradient, lr):
+    def backpropagate(self, gradient, lr):
         index_c = np.where(gradient!=0)[0][0]
         a = np.exp(self.last_input)
         s = np.sum(a)
@@ -36,7 +36,7 @@ class FullyConnected():
         self.activations=np.dot(self.weights, f)+self.biases
         return self.activations
 
-    def backpropogate(self, gradient, lr):
+    def backpropagate(self, gradient, lr):
         delta_w = self.last_input[np.newaxis].T @ gradient[np.newaxis] # d_L_d_w
         delta_b = gradient * 1
 
@@ -69,7 +69,7 @@ class convolutionLayer():
         out_output=ReLu(output)
         return output
 
-    def backpropogate(self, gradient, lr):
+    def backpropagate(self, gradient, lr):
         deltas=np.zeros(shape=self.kernels.shape)
         for index, m in enumerate(gradient):
             for row in range(0, len(self.last_input)-1-m.shape[0], self.stride):
@@ -108,7 +108,7 @@ class poolingLayer():
             #print(ret)
         return output
 
-    def backpropogate(self, gradient, lr):
+    def backpropagate(self, gradient, lr):
         d_L_d_in = np.zeros(shape=self.last_input.shape)
         for map_index in range(len(self.last_input)):
             for row in range(0, len(self.last_input[map_index])-1, self.stride):
