@@ -30,16 +30,16 @@ class cnn():
         loss = -np.log(output[target])
         return output, correct, loss
 
-    def backpropogate(self, input, target, debug=False):
+    def backpropagate(self, input, target, debug=False):
         output, _, loss = self.forward(input, target, debug)
         grad = np.zeros(self.layers[-2].shape[1])
         grad[target] = -1/output[target]
         for layer in reversed(self.layers):
-            grad = layer.backpropogate(grad, self.learning_rate)
+            grad = layer.backpropagate(grad, self.learning_rate)
 
     def train(self, train_data, show_progress=False):
         for train_index in range(len(train_data)):
-            self.backpropogate(train_data[train_index][0], train_data[train_index][1])
+            self.backpropagate(train_data[train_index][0], train_data[train_index][1])
             if show_progress:
                 print("Training: {}/{}".format(train_index, len(train_data)))
 
@@ -63,10 +63,10 @@ training, testing = [(i/254, l) for i, l in zip(mnist[0][0], mnist[0][1])], [(i/
 test_net = cnn([convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected([13*13*3, 10]), Softmax()], 0.06)
 
 
-test_size = 1000
-"""test_net.test(testing[:test_size])
-test_net.train(training[:10000], show_progress=True)
+test_size = 100
+test_net.test(testing[:test_size])
+test_net.train(training[:100], show_progress=True)
 test_net.test(testing[test_size:2*test_size])
-"""
-#test_net.forward(training[0][0], training[0][1], debug=True)
-test_net.backpropogate(training[0][0], training[0][1], debug=True)
+
+
+#test_net.backpropagate(training[0][0], training[0][1], debug=True)
