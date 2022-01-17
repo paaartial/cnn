@@ -2,10 +2,22 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
+class dimensionError(Exception):
+    #raised when an input has the wrong number of dimensions
+    pass
+
 def draw_image(img_to_draw):
-    plt.imshow(img_to_draw, cmap = mpl.cm.binary, interpolation="nearest")
-    plt.axis("off")
-    plt.show()
+    if len(img_to_draw.shape)==2:
+        plt.imshow(img_to_draw, cmap = mpl.cm.binary, interpolation="nearest")
+        plt.axis("off")
+        plt.show()
+    elif len(img_to_draw.shape)==3:
+        for m in img_to_draw:
+            plt.imshow(m, cmap = mpl.cm.binary, interpolation="nearest")
+            plt.axis("off")
+            plt.show()
+    else: 
+        raise dimensionError
 
 def draw_arr(arr_to_draw):
     prnt=""

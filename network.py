@@ -62,8 +62,11 @@ mnist = load_data()
 training, testing = [(i/254, l) for i, l in zip(mnist[0][0], mnist[0][1])], [(i/254, l) for i, l in zip(mnist[1][0], mnist[1][1])]
 test_net = cnn([convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected([13*13*3, 10]), Softmax()], 0.06)
 
+"""
 test_size = 100
-#test_net.backpropogate(training[0][0], training[0][1], debug=True)
 test_net.test(testing[:test_size])
 test_net.train(training[:1000], show_progress=True)
 test_net.test(testing[test_size:2*test_size])
+"""
+
+test_net.backpropogate(training[0][0], training[0][1], debug=False)

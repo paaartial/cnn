@@ -4,10 +4,6 @@ import numpy as np
 from images import test_rand, test_num
 from helper import *
 
-class dimensionError(Exception):
-    #raised when an input has the wrong number of dimensions
-    pass
-
 class Softmax():
     def __init__(self) -> None:
         pass
@@ -78,6 +74,7 @@ class convolutionLayer():
                     s=np.multiply([input[r][col:col+self.kernel_shape[0]] for r in range(row, row+self.kernel_shape[1])], kernel[1])
                     output[kernel[0]][row][col]=sum(map(sum, s))
         out_output=ReLu(output)
+        print(output.shape)
         return out_output
 
     def backpropogate(self, gradient, lr):
@@ -110,13 +107,28 @@ class poolingLayer():
                         print("Pooling type not specified. Use either MAX or AVG")
                         return
             #print(ret)
-        self.last_output=output
         return output
 
     def backpropogate(self, gradient, lr):
-        out_in = np.zeros(shape=self.last_input.shape)
-        
-        for row in range(0, len(self.last_input)-1, self.stride):
-            for col in range(0, len(self.last_input[row])-1, self.stride):
-                out_in[]
+        d_L_d_in = np.zeros(shape=self.last_input.shape)
+        for map_index in range(len(self.last_input)):
+            for row in range(0, len(self.last_input[map_index])-1, self.stride):
+                for col in range(0, len(self.last_input[map_index][row])-1, self.stride):
+                    if self.last_input[map_index][row][col]==gradient[map_index][int(row/self.stride)][int(col/self.stride)]:
+                        d_L_d_in[map_index][row][col]=gradient[map_index][int(row/self.stride)][int(col/self.stride)]
+        return d_L_d_in
 
+if __name__=="__main__":
+    cl = convolutionLayer(3, [3, 3])
+    f1 = cl.forward(test_num)
+
+    pl = poolingLayer("MAX", [2, 2])
+    f2 = pl.forward(f1)
+    
+    fc = FullyConnected([13*13*3, 10])
+    f3 = fc.forward(f2)
+
+    s = Softmax()
+    f4 = s.forward(f3)
+
+    poowork = [cl, pl, fc, s]
