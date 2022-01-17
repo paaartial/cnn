@@ -26,7 +26,7 @@ def draw_arr(arr_to_draw):
             if c == 0:
                 prnt +="  "
             else:
-                prnt +=str(c)
+                prnt +=str(c*100//100)
             prnt+=" "
         prnt+="\n"
     print(prnt)

@@ -37,8 +37,6 @@ class FullyConnected():
         return self.activations
 
     def backpropogate(self, gradient, lr):
-        #print(self.last_input[np.newaxis].shape)
-        #print(gradient[np.newaxis].shape)
         delta_w = self.last_input[np.newaxis].T @ gradient[np.newaxis] # d_L_d_w
         delta_b = gradient * 1
 
@@ -50,16 +48,10 @@ class FullyConnected():
         return new_grad.reshape(self.last_input_shape)
 
 
-
-
-
 class convolutionLayer():
     #Only 3x3 filters for now
-    def __init__(self, num_kernels=0, kernel_shape=[3, 3], k=[], p=0, s=1) -> None:
-        if k==[]:
-            self.kernels = np.random.randn(num_kernels, kernel_shape[0], kernel_shape[1]) / 9
-        else:
-            self.kernels=k
+    def __init__(self, num_kernels=3, kernel_shape=[3, 3], p=0, s=1) -> None:
+        self.kernels = np.random.randn(num_kernels, kernel_shape[0], kernel_shape[1]) / 9
         self.kernel_shape=kernel_shape
         self.stride=s
         self.padding=p
@@ -67,18 +59,25 @@ class convolutionLayer():
 
     def forward(self, input):
         #[(W−K+2P)/S]+1
+        self.last_input=input
         output=np.zeros(shape=(self.num_kernels, 1+len(input[0])+2*self.padding-self.kernel_shape[0], 1+len(input)+2*self.padding-self.kernel_shape[1]))
         for kernel in enumerate(self.kernels):
-            for row in range(0, len(input)-1-self.stride, self.stride):
-                for col in range(0, len(input[row])-1-self.stride, self.stride): 
+            for row in range(0, len(input)-kernel[1].shape[1], self.stride):
+                for col in range(0, len(input[row])-kernel[1].shape[0], self.stride): 
                     s=np.multiply([input[r][col:col+self.kernel_shape[0]] for r in range(row, row+self.kernel_shape[1])], kernel[1])
                     output[kernel[0]][row][col]=sum(map(sum, s))
         out_output=ReLu(output)
-        print(output.shape)
-        return out_output
+        return output
 
     def backpropogate(self, gradient, lr):
-        pass
+        deltas=np.zeros(shape=self.kernels.shape)
+        for index, m in enumerate(gradient):
+            for row in range(0, len(self.last_input)-1-m.shape[0], self.stride):
+                for col in range(0, len(self.last_input[row])-1-m.shape[1], self.stride): 
+                    sect = [self.last_input[r][col:col+m.shape[0]] for r in range(row, row+m.shape[1])]
+                    s=np.multiply(sect, m)
+                    deltas[index][row][col]=sum(map(sum, s))
+        self.kernels -= lr * deltas
 
 class poolingLayer():
     #no support for backpropogation of average pooling yet nor ever
@@ -119,9 +118,9 @@ class poolingLayer():
         return d_L_d_in
 
 if __name__=="__main__":
-    cl = convolutionLayer(3, [3, 3])
+    cl = convolutionLayer(3, [15, 15])
     f1 = cl.forward(test_num)
-
+    """
     pl = poolingLayer("MAX", [2, 2])
     f2 = pl.forward(f1)
     
@@ -131,4 +130,4 @@ if __name__=="__main__":
     s = Softmax()
     f4 = s.forward(f3)
 
-    poowork = [cl, pl, fc, s]
+    poowork = [cl, pl, fc, s]"""

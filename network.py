@@ -12,7 +12,6 @@ class cnn():
     def forward(self, input, target, debug=False):
         output=input
         for layer in self.layers:
-            output=layer.forward(output)
             if debug:
                 try:
                     draw_image(output)
@@ -22,6 +21,7 @@ class cnn():
                     else:
                         for m in output:
                             draw_image(m)
+            output=layer.forward(output)
 
         #calculate loss
         assert sum(output)<1+e and sum(output)>1-e
@@ -62,11 +62,11 @@ mnist = load_data()
 training, testing = [(i/254, l) for i, l in zip(mnist[0][0], mnist[0][1])], [(i/254, l) for i, l in zip(mnist[1][0], mnist[1][1])]
 test_net = cnn([convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected([13*13*3, 10]), Softmax()], 0.06)
 
-"""
-test_size = 100
-test_net.test(testing[:test_size])
-test_net.train(training[:1000], show_progress=True)
+
+test_size = 1000
+"""test_net.test(testing[:test_size])
+test_net.train(training[:10000], show_progress=True)
 test_net.test(testing[test_size:2*test_size])
 """
-
-test_net.backpropogate(training[0][0], training[0][1], debug=False)
+#test_net.forward(training[0][0], training[0][1], debug=True)
+test_net.backpropogate(training[0][0], training[0][1], debug=True)
