@@ -31,19 +31,9 @@ def draw_arr(arr_to_draw):
         prnt+="\n"
     print(prnt)
 
-def sigmoid(xl, deriv=False):
-    if not deriv:
-        return [1/(1 + np.exp(-x)) for x in xl]
-    return [sx * (1-sx) for sx in sigmoid(xl)]
-
 def split_train_test(train, test, train_size, test_size):
     shuffled_train_indices = np.random.permutation(len(train[0]))[:train_size]
     shuffled_test_indices = np.random.permutation(len(test[0]))[:test_size]
     to_train_pairs = [(train[0][shuffled_index], train[1][shuffled_index]) for shuffled_index in range(len(shuffled_train_indices))]
     to_test_pairs = [(test[0][shuffled_index], test[1][shuffled_index]) for shuffled_index in range(len(shuffled_test_indices))]
     return (to_train_pairs, to_test_pairs)
-
-def ReLu(xl, deriv=False):
-    if not deriv:
-        return np.maximum(xl, 0)
-    return np.max(xl, 0)/xl

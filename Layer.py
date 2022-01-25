@@ -1,8 +1,24 @@
 
+from turtle import forward
 import numpy as np
 
 from images import test_rand, test_num
 from helper import *
+
+class ReLu():
+    def __init__(self) -> None:
+        pass
+
+    def forward(self, input):
+        self.last_input = input
+        return np.maximum(input, 0)
+
+    def backpropagate(self, gradient, lr):
+        return np.greater(self.last_input, 0) * gradient 
+
+    def get(self):
+        return ("ReLu", None)
+
 
 class Softmax():
     def __init__(self) -> None:
@@ -86,7 +102,6 @@ class convolutionLayer():
                 for col in range(0, len(input[row])-kernel[1].shape[0], self.stride): 
                     s=np.multiply([input[r][col:col+self.kernel_shape[0]] for r in range(row, row+self.kernel_shape[1])], kernel[1])
                     output[kernel[0]][row][col]=sum(map(sum, s))
-        out_output=ReLu(output)
         return output
 
     def backpropagate(self, gradient, lr):
