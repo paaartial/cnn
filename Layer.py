@@ -23,7 +23,7 @@ class Softmax():
         return out_in * gradient[index_c]
     
     def get(self):
-        return ("softmax")
+        return ("softmax", None)
 
 class FullyConnected():
     def __init__(self, s=None, w=[], b=[]) -> None:

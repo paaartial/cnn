@@ -77,7 +77,7 @@ def load_network(name):
                 l=FullyConnected(w=np.array(ld[1]), b=np.array(ld[2]))
             if ld[0] == "convolution":
                 l=convolutionLayer(k=np.array(ld[1]), s=ld[2])
-            if ld[0] == "Softmax":
+            if ld[0] == "softmax":
                 l=Softmax()
             if ld[0] == "pooling":
                 l=poolingLayer(ld[1], ld[2])
@@ -89,14 +89,13 @@ from tensorflow.keras.datasets.mnist import load_data
 mnist = load_data()
 training, testing = [(i/254, l) for i, l in zip(mnist[0][0], mnist[0][1])], [(i/254, l) for i, l in zip(mnist[1][0], mnist[1][1])]
 if __name__ == "__main__":
-    test_net = cnn("test", [convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected(s=[13*13*3, 10]), Softmax()], 0.06)
-
     test_size = 100
-    test_net.train(training[:1000], show_progress=True)
-    #test_net.serialize()
+    test_net = cnn("test", [convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected(s=[13*13*3, 10]), Softmax()], 0.06)
+    #test_net.train(training[:1000], show_progress=True)
+    test_net.serialize()
 
-    #test_net=load_network("test")
-    #test_net.test(training[:test_size])
+    test_net=load_network("test")
+    test_net.test(training[:test_size])
 
 
 #test_net.backpropagate(training[0][0], training[0][1], debug=True)
