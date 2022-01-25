@@ -1,13 +1,15 @@
 from Layer import *
 from images import test_normal
 import numpy as np
+import json
 
 e=0.0000001
 
 class cnn():
-    def __init__(self, l, lr):
+    def __init__(self, n, l, lr):
         self.layers=l
         self.learning_rate=lr
+        self.name=n
     
     def forward(self, input, target, debug=False):
         output=input
@@ -28,10 +30,10 @@ class cnn():
         prediction = list(output).index(max(output))
         correct = 1 if prediction == target else 0
         loss = -np.log(output[target])
-        return output, correct, loss
+        return output, correct, loss, prediction
 
     def backpropagate(self, input, target, debug=False):
-        output, _, loss = self.forward(input, target, debug)
+        output, _, loss, p = self.forward(input, target, debug)
         grad = np.zeros(self.layers[-2].shape[1])
         grad[target] = -1/output[target]
         for layer in reversed(self.layers):
@@ -47,7 +49,7 @@ class cnn():
         accuracy, avg_loss = 0, 0
         for test_index in range(len(test_data)):
             #print("{}/{}".format(test_index+1, len(test_data[0])))
-            o, c, l = self.forward(test_data[test_index][0], test_data[test_index][1], debug)
+            o, c, l, p = self.forward(test_data[test_index][0], test_data[test_index][1], debug)
             accuracy+=c
             avg_loss+=l
 
@@ -57,16 +59,44 @@ class cnn():
         print("Loss: {}, accuracy: {}%".format(avg_loss, accuracy))
         return avg_loss, accuracy
 
+    def serialize(self):
+        with open(self.name + ".json", "w") as outfile:
+            to_save={}
+            to_save["layer data"] = [l.get() for l in self.layers]
+            to_save["learning rate"] = self.learning_rate
+            json.dump(to_save, outfile)
+            outfile.close()
+
+def load_network(name):
+    with open(name + ".json", 'r') as openfile:
+        reader = json.load(openfile)
+        layers=[]
+        layer_data = reader["layer data"]
+        for ld in layer_data:
+            if ld[0] == "fully connected":
+                l=FullyConnected(w=np.array(ld[1]), b=np.array(ld[2]))
+            if ld[0] == "convolution":
+                l=convolutionLayer(k=np.array(ld[1]), s=ld[2])
+            if ld[0] == "Softmax":
+                l=Softmax()
+            if ld[0] == "pooling":
+                l=poolingLayer(ld[1], ld[2])
+            layers.append(l)
+        loaded = cnn(name, layers, reader["learning rate"])
+        return loaded
+
 from tensorflow.keras.datasets.mnist import load_data
 mnist = load_data()
 training, testing = [(i/254, l) for i, l in zip(mnist[0][0], mnist[0][1])], [(i/254, l) for i, l in zip(mnist[1][0], mnist[1][1])]
-test_net = cnn([convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected([13*13*3, 10]), Softmax()], 0.06)
+if __name__ == "__main__":
+    test_net = cnn("test", [convolutionLayer(3, [3, 3]), poolingLayer("MAX", [2, 2]), FullyConnected(s=[13*13*3, 10]), Softmax()], 0.06)
 
+    test_size = 100
+    test_net.train(training[:1000], show_progress=True)
+    #test_net.serialize()
 
-test_size = 100
-test_net.test(testing[:test_size])
-test_net.train(training[:100], show_progress=True)
-test_net.test(testing[test_size:2*test_size])
+    #test_net=load_network("test")
+    #test_net.test(training[:test_size])
 
 
 #test_net.backpropagate(training[0][0], training[0][1], debug=True)

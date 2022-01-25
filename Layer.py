@@ -21,13 +21,25 @@ class Softmax():
         out_in = -a[index_c] * a / (s ** 2)
         out_in[index_c] = a[index_c] * (s - a[index_c]) / (s ** 2)
         return out_in * gradient[index_c]
+    
+    def get(self):
+        return ("softmax")
 
 class FullyConnected():
-    def __init__(self, shape) -> None:
-        self.shape=shape
+    def __init__(self, s=None, w=[], b=[]) -> None:
+        if s==None:
+            self.shape=w.shape
+        else:
+            self.shape=s
+        if w==[]:
+            self.weights=np.random.randn(self.shape[1], self.shape[0])
+        else:
+            self.weights=w
+        if b==[]:
+            self.biases=np.zeros(self.shape[1])
+        else:
+            self.biases=b
         self.activations=[]
-        self.weights=np.random.randn(shape[1], shape[0])
-        self.biases=np.zeros(shape[1])
 
     def forward(self, input):
         f=input.flatten()
@@ -47,15 +59,23 @@ class FullyConnected():
 
         return new_grad.reshape(self.last_input_shape)
 
+    def get(self):
+        return ("fully connected", self.weights.tolist(), self.biases.tolist())
+
 
 class convolutionLayer():
     #Only 3x3 filters for now
-    def __init__(self, num_kernels=3, kernel_shape=[3, 3], p=0, s=1) -> None:
-        self.kernels = np.random.randn(num_kernels, kernel_shape[0], kernel_shape[1]) / 9
-        self.kernel_shape=kernel_shape
+    def __init__(self, num_kernels=3, kernel_shape=[3, 3], k=[], p=0, s=1) -> None:
         self.stride=s
         self.padding=p
-        self.num_kernels=num_kernels
+        if k==[]:
+            self.kernels = np.random.randn(num_kernels, kernel_shape[0], kernel_shape[1]) / 9
+            self.kernel_shape=kernel_shape
+            self.num_kernels=num_kernels
+        else:
+            self.kernels=k
+            self.kernel_shape=k[0].shape
+            self.num_kernels=len(k)
 
     def forward(self, input):
         #[(W−K+2P)/S]+1
@@ -79,10 +99,12 @@ class convolutionLayer():
                     deltas[index][row][col]=sum(map(sum, s))
         self.kernels -= lr * deltas
 
+    def get(self):
+        return ("convolution", self.kernels.tolist(), self.stride)
+
 class poolingLayer():
     #no support for backpropogation of average pooling yet nor ever
     def __init__(self, type, receptiveField, k=None, p=0, s=2) -> None:
-        self.kernel=k
         self.stride=s
         self.padding=p
         self.type=type
@@ -106,7 +128,7 @@ class poolingLayer():
                         print("Pooling type not specified. Use either MAX or AVG")
                         return
             #print(ret)
-        return output
+        return output 
 
     def backpropagate(self, gradient, lr):
         d_L_d_in = np.zeros(shape=self.last_input.shape)
@@ -116,6 +138,9 @@ class poolingLayer():
                     if self.last_input[map_index][row][col]==gradient[map_index][int(row/self.stride)][int(col/self.stride)]:
                         d_L_d_in[map_index][row][col]=gradient[map_index][int(row/self.stride)][int(col/self.stride)]
         return d_L_d_in
+
+    def get(self):
+        return ("pooling", self.type, self.rf)
 
 if __name__=="__main__":
     cl = convolutionLayer(3, [15, 15])
