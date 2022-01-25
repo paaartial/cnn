@@ -48,7 +48,10 @@ class FullyConnected():
         else:
             self.shape=s
         if w==[]:
-            self.weights=np.random.randn(self.shape[1], self.shape[0])
+            #scale = 1/max(1., sum(self.shape)/2.)
+            #limit = np.sqrt(3.0 * scale)
+            limit = np.sqrt(6/sum(self.shape))
+            self.weights = np.random.uniform(low=-limit, high=limit, size=(self.shape[1], self.shape[0]))
         else:
             self.weights=w
         if b==[]:
