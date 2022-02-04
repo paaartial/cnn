@@ -1,9 +1,16 @@
-
-from turtle import forward
 import numpy as np
 
 from images import test_rand, test_num
 from helper import *
+
+def convolute(input, filter, stride=1, padding=0):
+    out=np.zeros(shape=(1+len(input[0])+2*padding-filter.shape[0], 1+len(input)+2*padding-filter.shape[1]))
+    input = np.pad(input, padding)
+    for row in range(0, len(input)-filter.shape[1], stride):
+        for col in range(0, len(input[row])-filter.shape[0], stride): 
+            s=np.multiply([input[r][col:col+filter.shape[0]] for r in range(row, row+filter.shape[1])], filter)
+            out[row][col]=sum(map(sum, s))
+    return out
 
 class ReLu():
     def __init__(self) -> None:
@@ -99,23 +106,25 @@ class convolutionLayer():
     def forward(self, input):
         #[(W−K+2P)/S]+1
         self.last_input=input
-        output=np.zeros(shape=(self.num_kernels, 1+len(input[0])+2*self.padding-self.kernel_shape[0], 1+len(input)+2*self.padding-self.kernel_shape[1]))
-        for kernel in enumerate(self.kernels):
-            for row in range(0, len(input)-kernel[1].shape[1], self.stride):
-                for col in range(0, len(input[row])-kernel[1].shape[0], self.stride): 
-                    s=np.multiply([input[r][col:col+self.kernel_shape[0]] for r in range(row, row+self.kernel_shape[1])], kernel[1])
-                    output[kernel[0]][row][col]=sum(map(sum, s))
-        return output
+        return np.array([convolute(input, kernel, self.stride, self.padding) for kernel in self.kernels])
 
     def backpropagate(self, gradient, lr):
         deltas=np.zeros(shape=self.kernels.shape)
+        next_error = []
+        #FULL PADDING = PAD(LEN(KERNEL)-1)
         for index, m in enumerate(gradient):
-            for row in range(0, len(self.last_input)-1-m.shape[0], self.stride):
-                for col in range(0, len(self.last_input[row])-1-m.shape[1], self.stride): 
-                    sect = [self.last_input[r][col:col+m.shape[0]] for r in range(row, row+m.shape[1])]
-                    s=np.multiply(sect, m)
-                    deltas[index][row][col]=sum(map(sum, s))
+            deltas[index] = convolute(self.last_input, m, self.stride, self.padding)
+            """rotated_kernel=np.rot90(self.kernels[index], 2)
+            error_at_layer = convolute(m, rotated_kernel, padding=len(rotated_kernel)-1)
+            #print(m)
+            if next_error==[]:
+                next_error=error_at_layer
+            else:
+                next_error+=error_at_layer"""
+            
         self.kernels -= lr * deltas
+
+        return next_error
 
     def get(self):
         return ("convolution", self.kernels.tolist(), self.stride)
@@ -153,7 +162,8 @@ class poolingLayer():
         for map_index in range(len(self.last_input)):
             for row in range(0, len(self.last_input[map_index])-1, self.stride):
                 for col in range(0, len(self.last_input[map_index][row])-1, self.stride):
-                    if self.last_input[map_index][row][col]==gradient[map_index][int(row/self.stride)][int(col/self.stride)]:
+                    sect = [self.last_input[map_index][r][col:col+self.rf[0]] for r in range(row, row+self.rf[1])]
+                    if self.last_input[map_index][row][col]==np.amax(sect):
                         d_L_d_in[map_index][row][col]=gradient[map_index][int(row/self.stride)][int(col/self.stride)]
         return d_L_d_in
 
@@ -163,14 +173,3 @@ class poolingLayer():
 if __name__=="__main__":
     cl = convolutionLayer(3, [15, 15])
     f1 = cl.forward(test_num)
-    """
-    pl = poolingLayer("MAX", [2, 2])
-    f2 = pl.forward(f1)
-    
-    fc = FullyConnected([13*13*3, 10])
-    f3 = fc.forward(f2)
-
-    s = Softmax()
-    f4 = s.forward(f3)
-
-    poowork = [cl, pl, fc, s]"""
